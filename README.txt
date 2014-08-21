@@ -8,7 +8,7 @@ But the actual reason, I created this package, is to have the ability to delete 
 Installation
 ============
 
-pip install django-undeletable
+    pip install django-undeletable
 
 When using this package, all your models should extend this packages BaseModel instead of django.db.models.Model.
 
@@ -23,5 +23,3 @@ While deriving from the BaseModel you get the following:
 * Your models have the normal objects queryset to stay compatible to the Django Admin
 * Your models have a data queryset which acts as the default for any app that uses model._default_manager instead of model.objects
 
-Urls are http://like.this and links can be
-written `like this <http://www.example.com/foo/bar>`_.
