@@ -3,5 +3,5 @@ CHANGES.txt
 LICENSE.txt
 setup.cfg
 setup.py
-django-undeletable/__init__.py
-django-undeletable/models.py
+django_undeletable/__init__.py
+django_undeletable/models.py
