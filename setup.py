@@ -1,17 +1,15 @@
+# coding=utf-8
 from distutils.core import setup
 
 setup(
     name='django-undeletable',
+    packages=['django-undeletable'],  # this must be the same as the name above
     version='0.1.0',
-    author='Andy Grabow	',
-    author_email='andy@freilandkiwis.de	',
-    packages=['django_undeletable', 'django_undeletable.test'],
-    scripts=[],
-    url='http://pypi.python.org/pypi/django-undeletable/',
-    license='LICENSE.txt',
-    description='Deleted data stays in the database and will be hidden from the default manager.',
-    long_description=open('README.txt').read(),
-    install_requires=[
-        "Django >= 1.4",
-    ],
+    description0='Deleted data stays in the database and will be hidden from the default manager.',
+    author='Andy Grabow',
+    author_email='andy@freilandkiwis.de',
+    url='https://github.com/kakulukia/django-undeletable',  # use the URL to the github repo
+    download_url='https://github.com/peterldowns/mypackage/tarball/0.1',  # I'll explain this in a second
+    keywords=['orm', 'undelete', 'shadow db'],  # arbitrary keywords
+    classifiers=[],
 )
