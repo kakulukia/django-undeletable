@@ -5,7 +5,7 @@ setup(
     name='django-undeletable',
     packages=['django-undeletable'],  # this must be the same as the name above
     version='0.1.1',
-    description0='Deleted data stays in the database and will be hidden from the default manager.',
+    description='Deleted data stays in the database and will be hidden from the default manager.',
     author='Andy Grabow',
     author_email='andy@freilandkiwis.de',
     url='https://github.com/kakulukia/django-undeletable',  # use the URL to the github repo
