@@ -9,7 +9,7 @@ setup(
     author='Andy Grabow',
     author_email='andy@freilandkiwis.de',
     url='https://github.com/kakulukia/django-undeletable',  # use the URL to the github repo
-    download_url='https://github.com/peterldowns/mypackage/tarball/0.1',  # I'll explain this in a second
+    download_url='https://github.com/kakulukia/django-undeletable/tarball/0.1',  # I'll explain this in a second
     keywords=['orm', 'undelete', 'shadow db'],  # arbitrary keywords
     classifiers=[],
 )
