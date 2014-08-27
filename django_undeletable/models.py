@@ -3,6 +3,7 @@ from django.db import models
 from django.db.models.query import QuerySet
 from django.utils.datetime_safe import datetime
 
+
 # basic model stuff
 ##########################################
 class DataQuerySet(QuerySet):
@@ -18,7 +19,7 @@ class AllObjectsQuerySet(QuerySet):
 class DataManager(models.Manager):
     use_for_related_fields = True
 
-    def get_query_set(self):
+    def get_queryset(self):
         qs = DataQuerySet(self.model, using=self._db)
         return qs.filter(active=True)
 
@@ -28,7 +29,7 @@ class DataManager(models.Manager):
 
 class AllObjectsManager(models.Manager):
 
-    def get_query_set(self):
+    def get_queryset(self):
         return DataQuerySet(self.model, using=self._db)
 
     def deleted(self):
