@@ -122,6 +122,7 @@ class User(AbstractBaseUser, BaseModel, PermissionsMixin):
     objects = UserManager()
 
     class Meta:
+        abstract = True
         verbose_name = _('user')
         verbose_name_plural = _('users')
 
