@@ -134,7 +134,7 @@ class User(AbstractBaseUser, BaseModel, PermissionsMixin):
         """ Returns the short name for the user. """
         return self.first_name
 
-    def email_user(self, subject, message, from_email=settings.EMAIL_DEFAULT_FROM, **kwargs):
+    def email_user(self, subject, message, from_email=settings.DEFAULT_FROM_EMAIL, **kwargs):
         """
          Sends an email to this User.
          If settings.EMAIL_OVERRIDE_ADDRESS is set, this mail will be redirected to the alternate mail address.
