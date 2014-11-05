@@ -82,6 +82,9 @@ class BaseModel(models.Model):
         if self.id:
             return self.__class__.objects.get(id=self.id)
 
+    def pprint(self):
+        pprint(self.__dict__)
+
 
 class NamedModel(BaseModel):
     name = models.CharField('Name', max_length=150, db_index=True)
