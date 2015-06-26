@@ -1,4 +1,8 @@
 # coding=utf-8
+from __future__ import absolute_import, unicode_literals
+
+from pprint import pprint
+
 from django.db.models.query import QuerySet
 from django.conf import settings
 from django.contrib.auth.models import UserManager, AbstractBaseUser, PermissionsMixin
@@ -9,48 +13,67 @@ from django.utils.translation import ugettext_lazy as _
 from django.core import validators
 
 
-# basic model stuff
+# basic model managers
 ##########################################
 class DataQuerySet(QuerySet):
     def delete(self):
-        self.update(active=False, deleted=timezone.now())
+        self.update(is_deleted=True, deleted=timezone.now())
+
+    def conceal(self):
+        """
+        Actually deleting data (without force=True) will cause DoesNotExist errors to
+        appear more frequently in your project, because foreign keys are not deleted
+        automatically for you anymore. But because the data manager is the default manager
+        of your models, it cant load those models anymore and thus its saver to just hide
+        models which are referenced in other models that might still be accessed afterwards.
+        """
+        self.update(concealed=True)
+
+    def reveal(self):
+        self.update(concealed=False)
 
 
 class AllObjectsQuerySet(QuerySet):
     def undelete(self):
-        self.update(active=True, deleted=None)
+        self.update(is_deleted=False, deleted=None)
 
 
-class DataManager(models.Manager):
+class DataManager(object, models.Manager):
     use_for_related_fields = True
 
     def get_queryset(self):
         qs = DataQuerySet(self.model, using=self._db)
-        return qs.filter(active=True)
+        return qs.filter(is_deleted=False)
 
-    def delete(self):
-        self.update(active=False, deleted=timezone.now())
+    def delete(self, force=False):
+        if force:
+            return super(DataManager, self).delete()
+        else:
+            return self.update(is_deleted=True, deleted=timezone.now())
+
+    def visible(self):
+        return self.filter(concealed=False)
 
 
-class AllObjectsManager(models.Manager):
-
+class AllObjectsManager(object, models.Manager):
     def get_queryset(self):
         return DataQuerySet(self.model, using=self._db)
 
     def deleted(self):
-        return self.filter(active=False)
+        return self.filter(is_deleted=True)
 
 
 # base model with useful stuff
+##########################################
 class BaseModel(models.Model):
-
-    created = models.DateTimeField(auto_now_add=True, editable=False, db_index=True)
-    modified = models.DateTimeField(auto_now=True, editable=False, db_index=True)
+    created = models.DateTimeField(_('created'), auto_now_add=True, editable=False, db_index=True)
+    modified = models.DateTimeField(auto_now=True, editable=False)
     deleted = models.DateTimeField(editable=False, null=True)
 
-    active = models.BooleanField(default=True, editable=False, db_index=True)
+    is_deleted = models.BooleanField(default=True, editable=False, db_index=True)
+    concealed = models.BooleanField(default=False)
 
-    # access only active data objects
+    # access non deleted data only
     data = DataManager()
     # access all (including deleted) data
     objects = AllObjectsManager()
@@ -59,18 +82,21 @@ class BaseModel(models.Model):
         abstract = True
         ordering = ['-created']
 
-    # deleted data is bad - doing it you shouldn't!
-    def delete(self, using=None):
-        self.active = False
-        self.save()
+    # deleted data is bad - doing it you shouldn't! (but if u really want, u can)
+    def delete(self, using=None, force=False):
+        if force:
+            super(BaseModel, self).delete(using=using)
+        else:
+            self.is_deleted = True
+            self.save()
 
     def undelete(self, using=None):
-        self.active = True
-        self.save()
+        self.__class__.objects.filter(id=self.id).update(is_deleted=False, deleted=None)
+        return self.reload_me()
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
 
-        if self.active:
+        if self.is_deleted:
             self.deleted = None
         elif not self.deleted:
             self.deleted = timezone.now()
@@ -79,6 +105,7 @@ class BaseModel(models.Model):
                                     update_fields=update_fields)
 
     def reload_me(self):
+        """ Django 1.8 introduced .refresh_from_db() - plz use this instead if possible :) """
         if self.id:
             return self.__class__.objects.get(id=self.id)
 
@@ -101,13 +128,12 @@ class UserDataManager(UserManager, DataManager):
     pass
 
 
+# abstract base user with data manager
+##########################################
 class User(AbstractBaseUser, BaseModel, PermissionsMixin):
-    username = models.CharField(_('username'), max_length=30, unique=True,
-                                help_text=_('user.login.username_help'),
-                                validators=[
-                                    validators.RegexValidator(
-                                        r'^[\w.@+-]+$', _('forms.errors.enter_valid_username.'), 'username_invalid')
-                                ])
+    username = models.CharField(
+        _('username'), max_length=30, unique=True, help_text=_('user.login.username_help'),
+        validators=[validators.RegexValidator(r'^[\w.@+-]+$', _('forms.errors.enter_valid_username.'), 'username_invalid')])
     first_name = models.CharField(_('first name'), max_length=30, blank=True)
     last_name = models.CharField(_('last name'), max_length=30, blank=True)
     email = models.EmailField(_('email address'), blank=False)
