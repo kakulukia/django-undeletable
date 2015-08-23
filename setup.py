@@ -4,7 +4,7 @@ from distutils.core import setup
 setup(
     name='django-undeletable',
     packages=['django_undeletable'],  # this must be the same as the name above
-    version='0.2.2',
+    version='0.3.0',
     description='Deleted data stays in the database and will be hidden from the default manager.',
     author='Andy Grabow',
     author_email='andy@freilandkiwis.de',
