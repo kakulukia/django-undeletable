@@ -3,29 +3,32 @@ from __future__ import absolute_import, unicode_literals
 
 from pprint import pprint
 
-from django.db.models.query import QuerySet
 from django.conf import settings
 from django.contrib.auth.models import UserManager, AbstractBaseUser, PermissionsMixin
+from django.core import validators
 from django.core.mail import send_mail
 from django.db import models
-from django.utils import timezone
+from django.db.models.query import QuerySet
+from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
-from django.core import validators
 
 
 # basic model managers
 ##########################################
 class DataQuerySet(QuerySet):
-    def delete(self):
-        self.update(is_deleted=True, deleted=timezone.now())
+    def delete(self, force=False):
+        if force:
+            return super(DataQuerySet, self).delete()
+        else:
+            return self.update(deleted=now())
+
+    def undelete(self):
+        self.update(deleted=None)
 
     def conceal(self):
         """
-        Actually deleting data (without force=True) will cause DoesNotExist errors to
-        appear more frequently in your project, because foreign keys are not deleted
-        automatically for you anymore. But because the data manager is the default manager
-        of your models, it cant load those models anymore and thus its saver to just hide
-        models which are referenced in other models that might still be accessed afterwards.
+        Some times you just want to be able to hide stuff from the public eye.
+        Use the visible manager method for your views instead to filter the data.
         """
         self.update(concealed=True)
 
@@ -33,34 +36,31 @@ class DataQuerySet(QuerySet):
         self.update(concealed=False)
 
 
-class AllObjectsQuerySet(QuerySet):
-    def undelete(self):
-        self.update(is_deleted=False, deleted=None)
-
-
-class DataManager(object, models.Manager):
+class DataManager(models.Manager):
     use_for_related_fields = True
 
     def get_queryset(self):
-        qs = DataQuerySet(self.model, using=self._db)
-        return qs.filter(is_deleted=False)
+        qs = self.get_full_queryset()
+        return qs.filter(deleted__isnull=True)
 
-    def delete(self, force=False):
-        if force:
-            return super(DataManager, self).delete()
-        else:
-            return self.update(is_deleted=True, deleted=timezone.now())
+    def get_full_queryset(self):
+        return DataQuerySet(self.model, using=self._db)
+
+    def get(self, *args, **kwargs):
+        if "pk" in kwargs or "id" in kwargs:
+            return self.get_full_queryset().get(*args, **kwargs)
+        return self.get_queryset().get(*args, **kwargs)
+
+    def filter(self, *args, **kwargs):
+        if "pk" in kwargs or "id" in kwargs:
+            return self.get_full_queryset().filter(*args, **kwargs)
+        return self.get_queryset().filter(*args, **kwargs)
+
+    def deleted(self):
+        return self.get_full_queryset().filter(deleted__isnull=False)
 
     def visible(self):
         return self.filter(concealed=False)
-
-
-class AllObjectsManager(object, models.Manager):
-    def get_queryset(self):
-        return DataQuerySet(self.model, using=self._db)
-
-    def deleted(self):
-        return self.filter(is_deleted=True)
 
 
 # base model with useful stuff
@@ -70,53 +70,42 @@ class BaseModel(models.Model):
     modified = models.DateTimeField(auto_now=True, editable=False)
     deleted = models.DateTimeField(editable=False, null=True)
 
-    is_deleted = models.BooleanField(default=True, editable=False, db_index=True)
+    # ability to hide stuff publicly
     concealed = models.BooleanField(default=False)
 
     # access non deleted data only
     data = DataManager()
-    # access all (including deleted) data
-    objects = AllObjectsManager()
 
     class Meta:
         abstract = True
         ordering = ['-created']
+        get_latest_by = 'created'
 
     # deleted data is bad - doing it you shouldn't! (but if u really want, u can)
     def delete(self, using=None, force=False):
         if force:
             super(BaseModel, self).delete(using=using)
         else:
-            self.is_deleted = True
+            self.deleted = now()
             self.save()
 
     def undelete(self, using=None):
-        self.__class__.objects.filter(id=self.id).update(is_deleted=False, deleted=None)
-        return self.reload_me()
-
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-
-        if self.is_deleted:
-            self.deleted = None
-        elif not self.deleted:
-            self.deleted = timezone.now()
-
-        super(BaseModel, self).save(force_insert=force_insert, using=using,
-                                    update_fields=update_fields)
+        self.deleted = None
+        self.save()
 
     def reload_me(self):
         """ Django 1.8 introduced .refresh_from_db() - plz use this instead if possible :) """
         if self.id:
-            return self.__class__.objects.get(id=self.id)
+            return self.__class__.data.get(id=self.id)
 
     def pprint(self):
         pprint(self.__dict__)
 
 
 class NamedModel(BaseModel):
-    name = models.CharField('Name', max_length=150, db_index=True)
+    name = models.CharField(_('Name'), max_length=150, db_index=True)
 
-    class Meta:
+    class Meta(BaseModel.Meta):
         ordering = ['name']
         abstract = True
 
@@ -142,18 +131,17 @@ class User(AbstractBaseUser, BaseModel, PermissionsMixin):
     is_active = models.BooleanField(_('active'), default=True,
                                     help_text=_('Designates whether this user should be treated as '
                                                 'active. Unselect this instead of deleting accounts.'))
-    date_joined = models.DateTimeField(_('date joined'), default=timezone.now)
+    date_joined = models.DateTimeField(_('date joined'), default=now)
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email']
 
     data = UserDataManager()
-    objects = UserManager()
 
-    class Meta:
-        abstract = True
+    class Meta(BaseModel.Meta):
         verbose_name = _('user')
         verbose_name_plural = _('users')
+        abstract = True
 
     def get_full_name(self):
         """ Returns the first_name plus the last_name, with a space in between. """

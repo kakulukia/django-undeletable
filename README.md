@@ -2,7 +2,8 @@
 # Django Undeletable
 
 Django Undeletable provides a base model with useful default attributes to keep track of your data.
-But the actual reason, I created this package, is to have the ability to delete data without wiping it from the database. This is achived through a secondary manager called data, that has an overwitten delete method and a filtered default queryset, which only lets you see undeleted datasets.
+But the actual reason, I created this package, is to have the ability to delete data without wiping it from the database.
+This is achived through a custom manager called data, that has a custom delete method and a filtered default queryset, which only lets you see undeleted datasets.
 
 ### Installation
 
@@ -16,6 +17,5 @@ When using this package, all your models should extend this packages BaseModel i
 While deriving from the BaseModel you get the following:
 
 * Your models have a created, modified and deleted DateTime attribute
-* Your models have an active flag, marking it as deleted if FALSE
-* Your models have the normal objects queryset to stay compatible to the Django Admin
-* Your models have a data queryset which acts as the default for any app that uses model._default_manager instead of model.objects
+* Your models have NO objects queryset to kinda show of that they behave differently and because im kinda lazy about writing - its still compatible because
+Django actually uses the _default_manager and does not care about its name (a sloppy written 3rd party app might, tho)
