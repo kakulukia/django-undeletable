@@ -1,3 +1,4 @@
+v0.4.1, 2015-11-12 -- lets also have objects, because there is still some software thats not using the default manager
 v0.4, 2015-10-21 -- maybe the final version?
 v0.1, 2014-8-21 -- Initial release.
 
