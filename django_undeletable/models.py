@@ -71,10 +71,11 @@ class BaseModel(models.Model):
     deleted = models.DateTimeField(editable=False, null=True)
 
     # ability to hide stuff publicly
-    concealed = models.BooleanField(default=False)
+    concealed = models.BooleanField(default=False, editable=False)
 
     # access non deleted data only
     data = DataManager()
+    objects = DataManager()
 
     class Meta:
         abstract = True
