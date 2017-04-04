@@ -9,6 +9,7 @@ from django.core import validators
 from django.core.mail import send_mail
 from django.db import models
 from django.db.models.query import QuerySet
+from django.db.models.signals import pre_delete, post_delete
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 
@@ -20,7 +21,12 @@ class DataQuerySet(QuerySet):
         if force:
             return super(DataQuerySet, self).delete()
         else:
-            return self.update(deleted=now())
+            for obj in self:
+                pre_delete.send(sender=self.model, instance=obj, using=self._db)
+            qs = self.update(deleted=now())
+            for obj in self:
+                post_delete.send(sender=self.model, instance=obj, using=self._db)
+            return qs
 
     def undelete(self):
         self.update(deleted=None)
@@ -87,8 +93,11 @@ class BaseModel(models.Model):
         if force:
             super(BaseModel, self).delete(using=using)
         else:
+            model_class = type(self)
+            pre_delete.send(sender=model_class, instance=self, using=self._state.db)
             self.deleted = now()
             self.save()
+            post_delete.send(sender=model_class, instance=self, using=self._state.db)
 
     def undelete(self, using=None):
         self.deleted = None
