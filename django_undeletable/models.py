@@ -87,6 +87,8 @@ class BaseModel(models.Model):
         abstract = True
         ordering = ['-created']
         get_latest_by = 'created'
+        default_manager_name = 'objects'
+        base_manager_name = 'data'
 
     # deleted data is bad - doing it you shouldn't! (but if u really want, u can)
     def delete(self, using=None, force=False):
