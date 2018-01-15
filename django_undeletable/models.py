@@ -5,11 +5,12 @@ from pprint import pprint
 
 from django.conf import settings
 from django.contrib.auth.models import UserManager, AbstractBaseUser, PermissionsMixin
-from django.core import validators
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.mail import send_mail
 from django.db import models
 from django.db.models.query import QuerySet
 from django.db.models.signals import pre_delete, post_delete
+from django.utils import timezone
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 
@@ -54,6 +55,9 @@ class DataManager(models.Manager):
 
     def get(self, *args, **kwargs):
         if "pk" in kwargs or "id" in kwargs:
+            # because models are not deleted foreign keys might reference 'deleted data'
+            # to not crash the admin in these cases, we let it still access this data
+            # if explicitly asked for by id
             return self.get_full_queryset().get(*args, **kwargs)
         return self.get_queryset().get(*args, **kwargs)
 
@@ -81,12 +85,14 @@ class BaseModel(models.Model):
 
     # access non deleted data only
     data = DataManager()
-    objects = DataManager()
+    objects = data  # fallback for 3rd party libs not respecting the default manager
 
     class Meta:
         abstract = True
         ordering = ['-created']
         get_latest_by = 'created'
+        base_manager_name = 'data'
+        default_manager_name = 'data'
 
     # deleted data is bad - doing it you shouldn't! (but if u really want, u can)
     def delete(self, using=None, force=False):
@@ -99,14 +105,9 @@ class BaseModel(models.Model):
             self.save()
             post_delete.send(sender=model_class, instance=self, using=self._state.db)
 
-    def undelete(self, using=None):
+    def undelete(self):
         self.deleted = None
         self.save()
-
-    def reload_me(self):
-        """ Django 1.8 introduced .refresh_from_db() - plz use this instead if possible :) """
-        if self.id:
-            return self.__class__.data.get(id=self.id)
 
     def pprint(self):
         pprint(self.__dict__)
@@ -119,7 +120,7 @@ class NamedModel(BaseModel):
         ordering = ['name']
         abstract = True
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
@@ -128,38 +129,70 @@ class UserDataManager(UserManager, DataManager):
 
 
 # abstract base user with data manager
-##########################################
-class User(AbstractBaseUser, BaseModel, PermissionsMixin):
-    username = models.CharField(
-        _('username'), max_length=30, unique=True, help_text=_('user.login.username_help'),
-        validators=[validators.RegexValidator(r'^[\w.@+-]+$', _('forms.errors.enter_valid_username.'), 'username_invalid')])
-    first_name = models.CharField(_('first name'), max_length=30, blank=True)
-    last_name = models.CharField(_('last name'), max_length=30, blank=True)
-    email = models.EmailField(_('email address'), blank=False)
-    is_staff = models.BooleanField(_('staff status'), default=False,
-                                   help_text=_('Designates whether the user can log into this admin site.'))
-    is_active = models.BooleanField(_('active'), default=True,
-                                    help_text=_('Designates whether this user should be treated as '
-                                                'active. Unselect this instead of deleting accounts.'))
-    date_joined = models.DateTimeField(_('date joined'), default=now)
+# please copy this user definition into your code and enhance it as needed
+############################################################################
+class AbstractUser(AbstractBaseUser, PermissionsMixin):
+    """
+    An abstract base class implementing a fully featured User model with
+    admin-compliant permissions.
 
-    USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['email']
+    Username, email and  password are required. Other fields are optional.
+    """
+    username_validator = UnicodeUsernameValidator()
+
+    username = models.CharField(
+        _('username'),
+        max_length=150,
+        unique=True,
+        help_text=_('Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.'),
+        validators=[username_validator],
+        error_messages={
+            'unique': _("A user with that username already exists."),
+        },
+    )
+    first_name = models.CharField(_('first name'), max_length=30, blank=True)
+    last_name = models.CharField(_('last name'), max_length=150, blank=True)
+    email = models.EmailField(_('email address'), blank=True)
+    is_staff = models.BooleanField(
+        _('staff status'),
+        default=False,
+        help_text=_('Designates whether the user can log into this admin site.'),
+    )
+    is_active = models.BooleanField(
+        _('active'),
+        default=True,
+        help_text=_(
+            'Designates whether this user should be treated as active. '
+            'Unselect this instead of deleting accounts.'
+        ),
+    )
+    date_joined = models.DateTimeField(_('date joined'), default=timezone.now)
 
     data = UserDataManager()
+    objects = data  # this should stay due to compatibilty issues with 3rd party libs
+
+    EMAIL_FIELD = 'email'
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['email']
 
     class Meta(BaseModel.Meta):
         verbose_name = _('user')
         verbose_name_plural = _('users')
         abstract = True
 
+    def clean(self):
+        super().clean()
+        self.email = self.__class__.data.normalize_email(self.email)
+
     def get_full_name(self):
-        """ Returns the first_name plus the last_name, with a space in between. """
+        """
+        Return the first_name plus the last_name, with a space in between.
+        """
         full_name = '%s %s' % (self.first_name, self.last_name)
         return full_name.strip()
 
     def get_short_name(self):
-        """ Returns the short name for the user. """
+        """Return the short name for the user."""
         return self.first_name
 
     def email_user(self, subject, message, from_email=settings.DEFAULT_FROM_EMAIL, **kwargs):
