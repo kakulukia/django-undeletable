@@ -27,6 +27,6 @@ setup(
         'Framework :: Django :: 2.0',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
-    install_requires=['Django>=2.0'],
+    install_requires=['Django>=1.11.8'],
     license="MIT",
 )
