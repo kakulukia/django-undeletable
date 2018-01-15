@@ -4,12 +4,12 @@ from distutils.core import setup
 setup(
     name='django-undeletable',
     packages=['django_undeletable'],
-    version='0.5.0',
+    version='0.5.1',
     description='Deleted data stays in the database and will be hidden by default.',
     author='Andy Grabow',
     author_email='andy@freilandkiwis.de',
     url='https://github.com/kakulukia/django-undeletable',
-    download_url='https://github.com/kakulukia/django-undeletable/tarball/0.5.0',
+    download_url='https://github.com/kakulukia/django-undeletable/tarball/0.5.1',
     keywords=['orm', 'undelete', 'shadow db'],
     classifiers=[
         'Development Status :: 4 - Beta',
