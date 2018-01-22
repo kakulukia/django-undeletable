@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sites",
     "django_undeletable",
+    "test_app",
 ]
 
 SITE_ID = 1
@@ -42,4 +43,5 @@ MIGRATION_MODULES = {
     'contenttypes': None,
 
     'django_undeletable': None,
+    "test_app": None,
 }

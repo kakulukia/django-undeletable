@@ -9,36 +9,9 @@ Tests for `django-undeletable` models module.
 """
 from django.conf import settings
 from django.core import mail
-from django.db import models
 from django.test import TestCase, override_settings
-from django.utils.translation import ugettext_lazy as _
 
-from django_undeletable.models import NamedModel, BaseModel, AbstractUser
-
-
-class Author(NamedModel):
-    class Meta():
-        app_label = "django_undeletable"
-
-
-class Book(NamedModel):
-    author = models.ForeignKey(Author, related_name='books', null=True,
-                               related_query_name='author', on_delete=models.SET_NULL)
-    co_authors = models.ManyToManyField(Author, related_name='featured_books',
-                                        related_query_name='co_author')
-
-    class Meta():
-        app_label = "django_undeletable"
-
-
-class TestUser(AbstractUser):
-    groups = None
-    user_permissions = None
-
-    class Meta(BaseModel.Meta):
-        verbose_name = _('user')
-        verbose_name_plural = _('users')
-        app_label = "django_undeletable"
+from test_app.models import Author, Book, TestUser
 
 
 class TestDeletion(TestCase):

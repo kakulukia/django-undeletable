@@ -8,11 +8,11 @@ name = "pypi"
 [packages]
 
 
+
 [dev-packages]
 
 coverage = "*"
 six = "*"
-ipdb = "*"
 bumpversion = "*"
 codecov = "*"
 "flake8" = "*"
