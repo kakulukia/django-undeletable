@@ -35,3 +35,11 @@ else:
 
 EMAIL_OVERRIDE_ADDRESS = 'do-not-reply@example.com'
 DEFAULT_FROM_EMAIL = 'noreply@example.com'
+
+# disable migrations
+MIGRATION_MODULES = {
+    'auth': None,
+    'contenttypes': None,
+
+    'django_undeletable': None,
+}

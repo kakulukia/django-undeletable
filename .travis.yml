@@ -3,6 +3,7 @@ cache: pip
 sudo: false
 
 python:
+  - "2.7"
   - "3.4"
   - "3.5"
   - "3.6"
@@ -18,8 +19,8 @@ install:
 
 matrix:
     fast_finish: true
-#    exclude:
-#      - { python: "2.7", env: DJANGO=2.0 }
+    exclude:
+      - { python: "2.7", env: DJANGO=2.0 }
 
 #    allow_failures:
 #      - env: DJANGO=master
