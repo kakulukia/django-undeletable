@@ -1,17 +1,34 @@
-# Config file for automatic testing at travis-ci.org
-
 language: python
+cache: pip
+sudo: false
 
-matrix:
-  fast_finish: true
+python:
+  - "2.7"
+  - "3.4"
+  - "3.5"
+  - "3.6"
 
-# command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
+env:
+  - DJANGO=1.11
+  - DJANGO=2.0
+
+
 install:
-  - pip install pipenv
-  - pipenv install --dev
+- |
+  pip install django==$DJANGO
+  pip install -r requirements.txt --use-mirrors
+  python setup.py develop
+matrix:
+    fast_finish: true
+    include:
+      - { python: "3.6", env: DJANGO=master }
+      - { python: "3.6", env: DJANGO=1.11 }
+      - { python: "3.6", env: DJANGO=2.0 }
+    exclude:
+      - { python: "2.7", env: DJANGO=master }
+      - { python: "2.7", env: DJANGO=2.0 }
 
-# command to run tests using coverage, e.g. python setup.py test
-script: tox
+    allow_failures:
+      - env: DJANGO=master
 
-after_success:
-  - codecov
+script: make coverage

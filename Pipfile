@@ -7,8 +7,6 @@ name = "pypi"
 
 [packages]
 
-django = "*"
-
 
 [dev-packages]
 
@@ -19,4 +17,3 @@ bumpversion = "*"
 codecov = "*"
 "flake8" = "*"
 safety = "*"
-tox = "*"
