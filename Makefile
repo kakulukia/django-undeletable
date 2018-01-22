@@ -44,6 +44,8 @@ coverage: ## check code coverage quickly with the default Python
 	coverage run --source django_undeletable runtests.py tests
 	coverage report -m
 	coverage html
+
+view-coverage: coverage
 	open htmlcov/index.html
 
 release: clean ## package and upload a release
