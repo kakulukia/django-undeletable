@@ -31,6 +31,10 @@ clean-pyc: ## remove Python file artifacts
 init:
 	pipenv install --dev
 
+init2:
+	pipenv install --dev --two
+
+
 lint: ## check style with flake8
 	flake8 django_undeletable tests
 
