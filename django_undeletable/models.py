@@ -22,11 +22,16 @@ class DataQuerySet(QuerySet):
         if force:
             return super(DataQuerySet, self).delete()
         else:
-            for obj in self:
+            # otherwise this list will be different in the next loop :)
+            to_be_notified = list(self)
+            for obj in to_be_notified:
                 pre_delete.send(sender=self.model, instance=obj, using=self._db)
+
             qs = self.update(deleted=now())
-            for obj in self:
+
+            for obj in to_be_notified:
                 post_delete.send(sender=self.model, instance=obj, using=self._db)
+
             return qs
 
     def undelete(self):
@@ -44,7 +49,7 @@ class DataQuerySet(QuerySet):
 
 
 class DataManager(models.Manager):
-    use_for_related_fields = True
+    # use_for_related_fields = True
 
     def get_queryset(self):
         qs = self.get_full_queryset()
@@ -85,7 +90,7 @@ class BaseModel(models.Model):
 
     # access non deleted data only
     data = DataManager()
-    objects = data  # fallback for 3rd party libs not respecting the default manager
+    objects = DataManager()  # fallback for 3rd party libs not respecting the default manager
 
     class Meta:
         abstract = True
@@ -106,8 +111,9 @@ class BaseModel(models.Model):
             post_delete.send(sender=model_class, instance=self, using=self._state.db)
 
     def undelete(self):
-        self.deleted = None
-        self.save()
+        # the model cannot just be saved since its not visible to Django
+        # and thus it will come to the conclusion that new data has to be inserted
+        self._meta.model.data.deleted().filter(id=self.id).update(deleted=None)
 
     def pprint(self):
         pprint(self.__dict__)
@@ -131,7 +137,7 @@ class UserDataManager(UserManager, DataManager):
 # abstract base user with data manager
 # please copy this user definition into your code and enhance it as needed
 ############################################################################
-class AbstractUser(AbstractBaseUser, PermissionsMixin):
+class AbstractUser(AbstractBaseUser, PermissionsMixin, BaseModel):
     """
     An abstract base class implementing a fully featured User model with
     admin-compliant permissions.
@@ -169,7 +175,7 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(_('date joined'), default=timezone.now)
 
     data = UserDataManager()
-    objects = data  # this should stay due to compatibilty issues with 3rd party libs
+    objects = UserDataManager()  # this should stay due to compatibilty issues with 3rd party libs
 
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'username'
@@ -181,7 +187,7 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin):
         abstract = True
 
     def clean(self):
-        super().clean()
+        super(AbstractBaseUser, self).clean()
         self.email = self.__class__.data.normalize_email(self.email)
 
     def get_full_name(self):
