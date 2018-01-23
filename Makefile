@@ -30,9 +30,13 @@ clean-pyc: ## remove Python file artifacts
 
 init:
 	pipenv install --dev
+	pipenv shell
+	pip install django
 
 init2:
 	pipenv install --dev --two
+	pipenv shell
+	pip install "django<2.0"
 
 
 lint: ## check style with flake8
