@@ -90,7 +90,7 @@ class BaseModel(models.Model):
 
     # access non deleted data only
     data = DataManager()
-    objects = data  # fallback for 3rd party libs not respecting the default manager
+    objects = DataManager()  # fallback for 3rd party libs not respecting the default manager
 
     class Meta:
         abstract = True
@@ -175,7 +175,7 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin, BaseModel):
     date_joined = models.DateTimeField(_('date joined'), default=timezone.now)
 
     data = UserDataManager()
-    objects = data  # this should stay due to compatibilty issues with 3rd party libs
+    objects = UserDataManager()  # this should stay due to compatibilty issues with 3rd party libs
 
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'username'
@@ -187,7 +187,7 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin, BaseModel):
         abstract = True
 
     def clean(self):
-        super().clean()
+        super(AbstractBaseUser, self).clean()
         self.email = self.__class__.data.normalize_email(self.email)
 
     def get_full_name(self):
