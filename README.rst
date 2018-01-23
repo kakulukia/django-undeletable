@@ -11,6 +11,7 @@ django-undeletable
 .. image:: https://codecov.io/gh/kakulukia/django-undeletable/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/kakulukia/django-undeletable
 
+
 I have run into dozens of situations where data got deleted by accident or somebody
 wanted to know when something got deleted or changed, so this little module will prevent
 accidents and you will always be able to reverse the situation or to identify why that
@@ -26,10 +27,11 @@ default attributes to keep track of your data. The custom **DataManager** keeps 
 deleted and live data. You can also keep stuff hidden from the public while displaying
 that data to some chosen customers (like beta testers).
 
+
 Installation
 --------------
 
-Install django-undeletable::
+Install django-undeletable
 
 .. code-block:: bash
 
@@ -61,16 +63,15 @@ While inheriting from BaseModel you get the following advantages:
 
 * Your models have created, modified and deleted DateTime attributes
 * The *data* queryset shall always tell you which ones of your models are undeletable
-or from 3rd party modules - but the main reason for using data is that im lazy and
- prefer typing data instead of objects :)
+  or from 3rd party modules - but the main reason for using data is that im lazy and
+  prefer typing data instead of objects :)
 * Since quite some modules don't respect a models default manager and just use 'objects',
-data is mirrored to objects to not run into any trouble
-* You have the option to hide specific data from the public while using *visible()* instead
-of *all()*
+  data is mirrored to objects to not run into any trouble
+* You have the option to hide specific data from the public while using *visible()* instead of *all()*
 * since its quite common, this package also includes the above NamedModel and a customized
-User Model that you should copy to your codebase and remove the *abstract = True* line to have undeletable users
+  User Model that you should copy to your codebase and remove the *abstract = True* line to have undeletable users
 * The included abstract User class features an EMAIL_OVERRIDE_ADDRESS setting that can be
-used to not actually email real users on a development system :)
+  used to not actually email real users on a development system :)
 
 
 Running Tests
