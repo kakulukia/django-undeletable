@@ -16,27 +16,29 @@ help:
 	@perl -nle'print $& if m{^[a-zA-Z_-]+:.*?## .*$$}' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-25s\033[0m %s\n", $$1, $$2}'
 
 clean: clean-build clean-pyc
+	@echo "all clean now .."
 
 clean-build: ## remove build artifacts
-	rm -fr build/
-	rm -fr dist/
-	rm -fr htmlcov/
-	rm -fr *.egg-info
+	@rm -fr build/
+	@rm -fr dist/
+	@rm -fr htmlcov/
+	@rm -fr *.egg-info
+	@rm -rf .coverage
+	@rm -rf my_secrets
 
 clean-pyc: ## remove Python file artifacts
-	find . -name '*.pyc' -exec rm -f {} +
-	find . -name '*.pyo' -exec rm -f {} +
-	find . -name '*~' -exec rm -f {} +
+	@find . -name '*.pyc' -exec rm -f {} +
+	@find . -name '*.pyo' -exec rm -f {} +
+	@find . -name '*.orig' -exec rm -f {} +
+	@find . -name '*~' -exec rm -f {} +
 
 init:
 	pipenv install --dev
 	pipenv shell
-	pip install django
 
 init2:
 	pipenv install --dev --two
 	pipenv shell
-	pip install "django<2.0"
 
 
 lint: ## check style with flake8
@@ -56,10 +58,22 @@ coverage: ## check code coverage quickly with the default Python
 view-coverage: coverage
 	open htmlcov/index.html
 
-release: clean ## package and upload a release
-	python setup.py sdist upload
-	python setup.py bdist_wheel upload
-
-sdist: clean ## package
-	python setup.py sdist
-	ls -l dist
+release: clean ## package and upload a release (working dir must be clean)
+	@while true; do \
+		CURRENT=`python -c "import django_secrets; print(django_secrets.__version__)"`; \
+		echo ""; \
+		echo "=== The current version is $$CURRENT - what's the next one?"; \
+		echo "==========================================================="; \
+		echo "1 - new major version"; \
+		echo "2 - new minor version"; \
+		echo "3 - patch"; \
+		echo ""; \
+		read yn; \
+		case $$yn in \
+			1 ) bumpversion major; break;; \
+			2 ) bumpversion minor; break;; \
+			3 ) bumpversion patch; break;; \
+			* ) echo "Please answer 1-3.";; \
+		esac \
+	done
+	@python setup.py bdist_wheel && twine upload dist/*

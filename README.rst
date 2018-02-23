@@ -1,15 +1,11 @@
-=============================
-django-undeletable
-=============================
+django-undeletable |BuildStatus|_ |Coverage|_
+==============================================================
 
-.. image:: https://badge.fury.io/py/django-undeletable.svg
-    :target: https://badge.fury.io/py/django-undeletable
+.. |BuildStatus| image:: https://travis-ci.org/kakulukia/django-undeletable.svg
+.. _BuildStatus: https://travis-ci.org/kakulukia/django-undeletable
 
-.. image:: https://travis-ci.org/kakulukia/django-undeletable.svg?branch=master
-    :target: https://travis-ci.org/kakulukia/django-undeletable
-
-.. image:: https://codecov.io/gh/kakulukia/django-undeletable/branch/master/graph/badge.svg
-    :target: https://codecov.io/gh/kakulukia/django-undeletable
+.. |Coverage| image:: https://codecov.io/gh/kakulukia/django-undeletable/branch/master/graph/badge.svg
+.. _Coverage: https://codecov.io/gh/kakulukia/django-undeletable
 
 
 I have run into dozens of situations where data got deleted by accident or somebody
