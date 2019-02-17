@@ -56,7 +56,7 @@ view-coverage: coverage
 
 release: clean ## package and upload a release (working dir must be clean)
 	@while true; do \
-		CURRENT=`python -c "import django_secrets; print(django_secrets.__version__)"`; \
+		CURRENT=`python -c "import django_undeletable; print(django_undeletable.__version__)"`; \
 		echo ""; \
 		echo "=== The current version is $$CURRENT - what's the next one?"; \
 		echo "==========================================================="; \
