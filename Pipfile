@@ -8,7 +8,7 @@ django = "*"
 
 [dev-packages]
 coverage = "*"
-six = "*"
+#six = "*"
 bumpversion = "*"
 codecov = "*"
 "flake8" = "*"

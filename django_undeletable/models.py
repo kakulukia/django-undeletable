@@ -56,7 +56,10 @@ class DataManager(models.Manager):
         return qs.filter(deleted__isnull=True)
 
     def get_full_queryset(self):
-        return DataQuerySet(self.model, using=self._db)
+        qs = super().get_queryset()
+        if not isinstance(qs, DataQuerySet):
+            qs = DataQuerySet(self.model, using=self._db)
+        return qs
 
     def get(self, *args, **kwargs):
         if "pk" in kwargs or "id" in kwargs:
@@ -81,7 +84,9 @@ class DataManager(models.Manager):
 # base model with useful stuff
 ##########################################
 class BaseModel(models.Model):
-    created = models.DateTimeField(_('created'), auto_now_add=True, editable=False, db_index=True)
+    created = models.DateTimeField(
+        _("created"), auto_now_add=True, editable=False, db_index=True
+    )
     modified = models.DateTimeField(auto_now=True, editable=False)
     deleted = models.DateTimeField(editable=False, null=True)
 
@@ -90,14 +95,15 @@ class BaseModel(models.Model):
 
     # access non deleted data only
     data = DataManager()
-    objects = DataManager()  # fallback for 3rd party libs not respecting the default manager
+    # fallback for 3rd party libs not respecting the default manager
+    objects = DataManager()
 
     class Meta:
         abstract = True
-        ordering = ['-created']
-        get_latest_by = 'created'
-        base_manager_name = 'data'
-        default_manager_name = 'data'
+        ordering = ["-created"]
+        get_latest_by = "created"
+        base_manager_name = "data"
+        default_manager_name = "data"
 
     # deleted data is bad - doing it you shouldn't! (but if u really want, u can)
     def delete(self, using=None, force=False):
@@ -120,10 +126,10 @@ class BaseModel(models.Model):
 
 
 class NamedModel(BaseModel):
-    name = models.CharField(_('Name'), max_length=150, db_index=True)
+    name = models.CharField(_("Name"), max_length=150, db_index=True)
 
     class Meta(BaseModel.Meta):
-        ordering = ['name']
+        ordering = ["name"]
         abstract = True
 
     def __str__(self):
@@ -144,46 +150,49 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin, BaseModel):
 
     Username, email and  password are required. Other fields are optional.
     """
+
     username_validator = UnicodeUsernameValidator()
 
     username = models.CharField(
-        _('username'),
+        _("username"),
         max_length=150,
         unique=True,
-        help_text=_('Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.'),
+        help_text=_(
+            "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
+        ),
         validators=[username_validator],
-        error_messages={
-            'unique': _("A user with that username already exists."),
-        },
+        error_messages={"unique": _("A user with that username already exists.")},
     )
-    first_name = models.CharField(_('first name'), max_length=30, blank=True)
-    last_name = models.CharField(_('last name'), max_length=150, blank=True)
-    email = models.EmailField(_('email address'), blank=True)
+    first_name = models.CharField(_("first name"), max_length=30, blank=True)
+    last_name = models.CharField(_("last name"), max_length=150, blank=True)
+    email = models.EmailField(_("email address"), blank=True)
     is_staff = models.BooleanField(
-        _('staff status'),
+        _("staff status"),
         default=False,
-        help_text=_('Designates whether the user can log into this admin site.'),
+        help_text=_("Designates whether the user can log into this admin site."),
     )
     is_active = models.BooleanField(
-        _('active'),
+        _("active"),
         default=True,
         help_text=_(
-            'Designates whether this user should be treated as active. '
-            'Unselect this instead of deleting accounts.'
+            "Designates whether this user should be treated as active. "
+            "Unselect this instead of deleting accounts."
         ),
     )
-    date_joined = models.DateTimeField(_('date joined'), default=timezone.now)
+    date_joined = models.DateTimeField(_("date joined"), default=timezone.now)
 
     data = UserDataManager()
-    objects = UserDataManager()  # this should stay due to compatibilty issues with 3rd party libs
+    objects = (
+        UserDataManager()
+    )  # this should stay due to compatibilty issues with 3rd party libs
 
-    EMAIL_FIELD = 'email'
-    USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['email']
+    EMAIL_FIELD = "email"
+    USERNAME_FIELD = "username"
+    REQUIRED_FIELDS = ["email"]
 
     class Meta(BaseModel.Meta):
-        verbose_name = _('user')
-        verbose_name_plural = _('users')
+        verbose_name = _("user")
+        verbose_name_plural = _("users")
         abstract = True
 
     def clean(self):
@@ -194,14 +203,16 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin, BaseModel):
         """
         Return the first_name plus the last_name, with a space in between.
         """
-        full_name = '%s %s' % (self.first_name, self.last_name)
+        full_name = "%s %s" % (self.first_name, self.last_name)
         return full_name.strip()
 
     def get_short_name(self):
         """Return the short name for the user."""
         return self.first_name
 
-    def email_user(self, subject, message, from_email=settings.DEFAULT_FROM_EMAIL, **kwargs):
+    def email_user(
+        self, subject, message, from_email=settings.DEFAULT_FROM_EMAIL, **kwargs
+    ):
         """
          Sends an email to this User.
          If settings.EMAIL_OVERRIDE_ADDRESS is set, this mail will be redirected to the alternate mail address.

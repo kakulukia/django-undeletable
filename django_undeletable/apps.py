@@ -3,7 +3,7 @@ from django.apps import AppConfig
 
 
 class DjangoUndeletableConfig(AppConfig):
-    name = 'django_undeletable'
+    name = "django_undeletable"
     verbose_name = "Django undeletable models"
 
     def ready(self):

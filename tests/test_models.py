@@ -11,11 +11,10 @@ from django.conf import settings
 from django.core import mail
 from django.test import TestCase, override_settings
 
-from test_app.models import Author, Book, TestUser
+from test_app.models import Author, Book, TestUser, CoverBook
 
 
 class TestDeletion(TestCase):
-
     def test_model_deletion(self):
         author = Author.data.create(name="John")
         self.assertEqual(Author.data.count(), 1)
@@ -31,23 +30,16 @@ class TestDeletion(TestCase):
 
 
 class GeneralTestCase(TestCase):
-
     @classmethod
     def setUpTestData(cls):
-        visible_author = Author.data.create(name='visible')
-        deleted_author = Author.data.create(name='deleted')
+        visible_author = Author.data.create(name="visible")
+        deleted_author = Author.data.create(name="deleted")
 
-        visible_book = Book.data.create(
-            name='visible book',
-            author=visible_author
-        )
+        visible_book = Book.data.create(name="visible book", author=visible_author)
         visible_book.co_authors.add(visible_author)
         visible_book.co_authors.add(deleted_author)
 
-        deleted_book = Book.data.create(
-            name='deleted book',
-            author=visible_author
-        )
+        deleted_book = Book.data.create(name="deleted book", author=visible_author)
         deleted_book.co_authors.add(visible_author)
         deleted_book.co_authors.add(deleted_author)
 
@@ -61,7 +53,6 @@ class GeneralTestCase(TestCase):
 
 
 class HideDeletedBooks(GeneralTestCase):
-
     def test_correct_visibility(self):
         self.assertEqual(self.visible_book.co_authors.count(), 2)
         self.deleted_author.delete()
@@ -69,13 +60,15 @@ class HideDeletedBooks(GeneralTestCase):
 
         # TODO: the join sadly will include deleted data
         # we need some way to filter that out by default
-        self.assertEqual(Book.data.filter(co_authors__name__contains='del').count(), 2)
+        self.assertEqual(Book.data.filter(co_authors__name__contains="del").count(), 2)
 
         # but manually filtering still works of course
-        self.assertEqual(Book.data.filter(
-            co_authors__name__contains='del',
-            co_authors__deleted__isnull=True,
-        ).count(), 0)
+        self.assertEqual(
+            Book.data.filter(
+                co_authors__name__contains="del", co_authors__deleted__isnull=True
+            ).count(),
+            0,
+        )
 
         self.assertEqual(Author.data.count(), 1)
         Author.data.all().delete()
@@ -130,7 +123,6 @@ class HideDeletedBooks(GeneralTestCase):
 
 
 class RealDeletionTestCase(GeneralTestCase):
-
     def test_really_deleting_stuff(self):
 
         self.assertEqual(Author.data.count(), 2)
@@ -153,16 +145,24 @@ class RealDeletionTestCase(GeneralTestCase):
 
 
 class ModelTests(GeneralTestCase):
-
     def test_model_functions(self):
-        self.assertEqual(str(self.visible_author), 'visible')
+        self.assertEqual(str(self.visible_author), "visible")
 
     def test_pprint(self):
         self.assertIsNone(self.visible_author.pprint())
 
 
-class UndeleteTestCase(GeneralTestCase):
+class ManagerQuerysetTest(TestCase):
+    def test_queryset_methods(self):
+        author = Author.data.create(name="visible")
 
+        CoverBook.data.create(name="visible book", author=author)
+
+        self.assertEqual(CoverBook.data.not_null().count(), 1)
+        self.assertEqual(CoverBook.data.all().not_null().count(), 1)
+
+
+class UndeleteTestCase(GeneralTestCase):
     def test_model_undelete(self):
         self.assertEqual(Author.data.count(), 2)
         self.deleted_author.delete()
@@ -172,45 +172,44 @@ class UndeleteTestCase(GeneralTestCase):
 
 
 class USerTestCase(TestCase):
-
     @classmethod
     def setUpTestData(cls):
         cls.user = TestUser.data.create(
-            username='tester',
-            email='Tester@EXample.com',
-            first_name='John',
-            last_name='Doe',
+            username="tester",
+            email="Tester@EXample.com",
+            first_name="John",
+            last_name="Doe",
         )
 
     def test_clean_email(self):
 
         self.user.clean()
-        self.assertEqual(self.user.email, 'Tester@example.com')
+        self.assertEqual(self.user.email, "Tester@example.com")
 
     def test_get_name(self):
 
-        self.assertEqual(self.user.get_full_name(), 'John Doe')
-        self.assertEqual(self.user.get_short_name(), 'John')
+        self.assertEqual(self.user.get_full_name(), "John Doe")
+        self.assertEqual(self.user.get_short_name(), "John")
 
     def test_sending_email(self):
 
-        self.user.email_user('foo', 'bar')
+        self.user.email_user("foo", "bar")
 
         self.assertEqual(len(mail.outbox), 1)
 
         # Verify that the subject of the first message is correct.
-        self.assertEqual(mail.outbox[0].subject, 'foo')
+        self.assertEqual(mail.outbox[0].subject, "foo")
         self.assertEqual(mail.outbox[0].recipients(), [settings.EMAIL_OVERRIDE_ADDRESS])
 
     @override_settings(EMAIL_OVERRIDE_ADDRESS=None)
     def test_really_sending_email(self):
 
-        self.user.email_user('foo', 'bar')
+        self.user.email_user("foo", "bar")
 
         self.assertEqual(len(mail.outbox), 1)
 
         # Verify that the subject of the first message is correct.
-        self.assertEqual(mail.outbox[0].subject, 'foo')
+        self.assertEqual(mail.outbox[0].subject, "foo")
         self.assertEqual(mail.outbox[0].recipients(), [self.user.email])
 
 
@@ -219,5 +218,6 @@ class AppConfigTest(TestCase):
         from django.apps import apps
 
         self.assertEqual(
-            apps.get_app_config('django_undeletable').verbose_name,
-            'Django undeletable models')
+            apps.get_app_config("django_undeletable").verbose_name,
+            "Django undeletable models",
+        )
