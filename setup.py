@@ -48,7 +48,7 @@ url = 'https://github.com/kakulukia/django-undeletable'
 setup(
     name='django-undeletable',
     version=version,
-    description="""Undeletable Django models""",
+    description="Undeletable Django models",
     long_description=readme + '\n\n' + history,
     author='Andy Grabow',
     author_email='andy@freilandkiwis.de',
