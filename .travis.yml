@@ -3,9 +3,11 @@ cache: pip
 sudo: false
 
 python:
+  - "3.3"
   - "3.4"
   - "3.5"
   - "3.6"
+  - "3.7"
 
 env:
   - DJANGO=1.11
@@ -19,9 +21,6 @@ install:
 
 matrix:
     fast_finish: true
-
-#    allow_failures:
-#      - env: DJANGO=master
 
 script: make coverage
 
