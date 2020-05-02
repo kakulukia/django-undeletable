@@ -47,10 +47,23 @@ done.
             abstract = True
 
 Extending the *Meta* class from *BaseModel.Meta* is important for Django 2.0+ otherwise you will experience
-your related querysets to not be managed by a DataManager but by Djangos default manager instead including
+your related QuerySets to not be managed by a DataManager but by Djangos default manager instead including
 deleted data.
 
+For a fully working QuerySet and Manager relation which share methods, you should create your managers the following way:
 
+.. code-block:: python
+
+    class BookQuerySet(DataQuerySet):
+        def not_null(self):
+            return self.filter(author__isnull=False)
+
+
+    class CoverBook(Book):
+        data = DataManager.from_queryset(BookQuerySet)()
+
+This way you can do ´CoverBook.data.all().nut_null()´ and ´CoverBook.data.nut_null()´ otherwise you will have
+to define the methods twice or face errors in one of the previous calls.
 
 Features
 ----------
