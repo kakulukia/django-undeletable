@@ -62,7 +62,7 @@ For a fully working QuerySet and Manager relation which share methods, you shoul
     class CoverBook(Book):
         data = DataManager.from_queryset(BookQuerySet)()
 
-This way you can do ´CoverBook.data.all().nut_null()´ and ´CoverBook.data.nut_null()´ otherwise you will have
+This way you can do `CoverBook.data.all().nut_null()` and `CoverBook.data.nut_null()` otherwise you will have
 to define the methods twice or face errors in one of the previous calls.
 
 Features
