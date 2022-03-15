@@ -12,7 +12,7 @@ from django.db.models.query import QuerySet
 from django.db.models.signals import pre_delete, post_delete
 from django.utils import timezone
 from django.utils.timezone import now
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 
 # basic model managers

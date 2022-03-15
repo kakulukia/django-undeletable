@@ -6,15 +6,18 @@ python:
   - "3.5"
   - "3.6"
   - "3.7"
+  - "3.8"
+  - "3.9"
+  - "3.10"
 
 env:
-  - DJANGO=1.11
-  - DJANGO=2.0
-  - DJANGO=2.1
+  - DJANGO=<3
+  - DJANGO=<4
+  - DJANGO=<5
 
 install:
   - pip install pipenv
-  - pip install django==$DJANGO
+  - pip install "django$DJANGO"
   - pipenv install --dev
 
 matrix:
