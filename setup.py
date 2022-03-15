@@ -50,6 +50,7 @@ setup(
     version=version,
     description="Undeletable Django models",
     long_description=readme + "\n\n" + history,
+    long_description_content_type="text/markdown",
     author="Andy Grabow",
     author_email="andy@freilandkiwis.de",
     url=url,
